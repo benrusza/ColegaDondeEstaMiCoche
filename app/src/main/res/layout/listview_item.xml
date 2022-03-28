@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Each List Item is displayed as TextView defined below -->
+
+<CheckBox xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/label"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:textColor="@color/black"
+    android:padding="10dip"
+    android:textSize="16sp"
+    android:textStyle="bold"
+    >
+</CheckBox>
