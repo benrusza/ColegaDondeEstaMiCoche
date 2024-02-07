@@ -19,17 +19,18 @@
         android:theme="@style/Theme.Design.NoActionBar">
         <activity
             android:name=".SeeLocation"
-            android:exported="false" />
+            android:exported="true" />
 
         <service
             android:name=".BlueListener"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="location" />
+            android:foregroundServiceType="location"
+             />
 
         <receiver
             android:name=".BootCompleteReceiver"
-            android:exported="false">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
 
@@ -39,15 +40,15 @@
 
         <activity
             android:name=".ListDevices"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
         </activity>
     </application>
 
