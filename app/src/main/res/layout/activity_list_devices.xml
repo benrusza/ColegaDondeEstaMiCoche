@@ -52,7 +52,7 @@
             app:layout_constraintHorizontal_bias="0.922"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <ListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/listView"
             android:layout_width="311dp"
             android:layout_height="262dp"
@@ -68,7 +68,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:fontFamily="@font/minecraft"
             android:text="Select bluetooth car device"
             android:textColor="@color/black"
             android:textSize="18dp"

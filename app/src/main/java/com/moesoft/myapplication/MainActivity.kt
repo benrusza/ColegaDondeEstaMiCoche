@@ -1,26 +1,21 @@
 package com.moesoft.myapplication
 
 import android.Manifest
+import android.app.ActivityManager
+import android.app.AlertDialog
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import androidx.appcompat.app.AppCompatActivity
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.location.*
-import android.content.*
-import android.os.Build
-import android.text.Html
-import android.text.method.LinkMovementMethod
-import android.content.Intent
-import android.app.ActivityManager
-import android.app.AlertDialog
-import androidx.annotation.RequiresApi
-import android.content.DialogInterface
-import android.os.SystemClock
-import android.text.format.Time
+import com.moesoft.myapplication.BlueListener.Companion.IS_RUNNING
 import java.time.OffsetTime
 
 class MainActivity : AppCompatActivity() {
@@ -28,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     private val PERMISSION_ID = 42
     lateinit var textClock:TextView
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,7 +31,7 @@ class MainActivity : AppCompatActivity() {
         val buttonGPS = findViewById<Button>(R.id.buttonGPS)
         val buttonLocation = findViewById<Button>(R.id.buttonGPSLocation)
         textClock = findViewById<TextView>(R.id.textViewClock)
-        val offset = OffsetTime.now();
+        val offset = OffsetTime.now()
         textClock.text = "${offset.hour} : ${offset.minute}"
         buttonGPS.setOnClickListener{
 
@@ -95,6 +90,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
         val manager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        //https://stackoverflow.com/questions/45817813/alternate-of-activitymanager-getrunningservicesint-after-oreo
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
             if (serviceClass.name == service.service.className) {
                 return true
@@ -133,17 +129,5 @@ class MainActivity : AppCompatActivity() {
             PERMISSION_ID
         )
     }
-
-    /*
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-        if (requestCode == PERMISSION_ID) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                getLastLocation()
-            }
-        }
-    }
-*/
-
-
 
 }

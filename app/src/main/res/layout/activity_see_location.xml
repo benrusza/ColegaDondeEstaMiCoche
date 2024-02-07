@@ -27,45 +27,45 @@
 
         <TextView
             android:id="@+id/textViewLocation"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="48dp"
             android:text="Location"
             android:textColor="@color/black"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.085"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.344" />
+            app:layout_constraintVertical_bias="0.26" />
 
         <TextView
             android:id="@+id/textView4"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="[[   :)   ]]"
+            android:layout_marginStart="24dp"
+            android:text="[:) \nLocations:"
             android:textColor="@color/black"
+            android:textSize="20sp"
             app:layout_constraintBottom_toTopOf="@+id/textViewLocation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.085"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="1.0" />
+            app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
             android:id="@+id/textView5"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="@font/minecraft"
+            android:layout_marginTop="8dp"
             android:text="Location"
             android:textColor="@color/white"
             android:textSize="23dp"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.204"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.024" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/buttonUpdate"
@@ -74,7 +74,6 @@
             android:layout_marginStart="10dp"
             android:layout_marginTop="40dp"
             android:background="@color/transparent"
-            android:fontFamily="@font/minecraft"
             android:text="Update"
             android:textAllCaps="false"
             android:textColor="@color/black"

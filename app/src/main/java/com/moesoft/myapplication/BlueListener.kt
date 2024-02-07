@@ -9,52 +9,59 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.*
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
-import android.app.NotificationManager
-import android.app.NotificationChannel
-import android.os.Build
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.moesoft.myapplication.Constants.Companion.CAR_LOCATION_LIST
+import com.moesoft.myapplication.model.RegLocation
+import java.lang.reflect.Type
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 
 class BlueListener : Service() {
 
     var sharedPreferences: SharedPreferences? = null
     private val myPreference = "myPref"
-    lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate() {
         super.onCreate()
-        if (Build.VERSION.SDK_INT >= 26) {
-            val CHANNEL_ID = "moesoft"
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Info notifications",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(
-                channel
-            )
-            val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("")
-                .setContentText("").build()
-            startForeground(1, notification)
+        if(IS_RUNNING){
+            return
         }
+
+        val CHANNEL_ID = "moesoft.service"
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Background service",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(
+            channel
+        )
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("CDEMC is Running in background")
+            .setContentText("To hide this, hold and select deactivate notifications")
+            .setSmallIcon(R.drawable.baseline_bluetooth_drive_24)
+            .build()
+
+        startForeground(1, notification)
 
         startBroadcastListener()
     }
 
 
     override fun onBind(p0: Intent?): IBinder? {
-        TODO("Not yet implemented")
-
+        //TODO("Not yet implemented")
+        return null
     }
 
+    //No se usa?
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        println(TAG+ " ON START COMMAND")
-
         if (intent != null) {
 
             when (intent.action) {
@@ -63,18 +70,17 @@ class BlueListener : Service() {
                     stopService()
                 }
 
-                ACTION_OPEN_APP -> openAppHomePage("intent?.getStringExtra(KEY_DATA)")
+                ACTION_OPEN_APP -> openAppHomePage()
             }
         }
-        return START_STICKY;
+        return START_STICKY
 
-        return super.onStartCommand(intent, flags, startId)
+        //return super.onStartCommand(intent, flags, startId)
     }
 
-    private fun openAppHomePage(value: String) {
+    private fun openAppHomePage() {
 
         val intent = Intent(applicationContext, MainActivity::class.java)
-        intent.putExtra(KEY_DATA, value)
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
 
@@ -87,6 +93,8 @@ class BlueListener : Service() {
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
         application.registerReceiver(bluetoothDeviceListener, filter)
         println("blue service start")
+
+        IS_RUNNING = true
     }
 
 
@@ -103,38 +111,39 @@ class BlueListener : Service() {
 
         IS_RUNNING = false
 
-        Toast.makeText(applicationContext, "CDEMC FINALIZADA", Toast.LENGTH_LONG).show()
+        newNotification(R.drawable.baseline_bluetooth_disabled_24,"App detenida: ","Colega donde esta mi coche se ha detenido")
+
         super.onDestroy()
     }
 
     companion object {
 
-        const val TAG = "FOREGROUND_SERVICE"
 
         const val ACTION_STOP_FOREGROUND_SERVICE = "ACTION_STOP_FOREGROUND_SERVICE"
 
         const val ACTION_OPEN_APP = "ACTION_OPEN_APP"
-        const val KEY_DATA = "KEY_DATA"
 
         var IS_RUNNING: Boolean = false
+
+        var deviceSaved = ""
     }
 
 
     private var bluetoothDeviceListener: BroadcastReceiver = object : BroadcastReceiver() {
 
+        @SuppressLint("MissingPermission")
         override fun onReceive(context: Context, intent: Intent) {
-            var device: BluetoothDevice
 
-            device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)!!;
+            val device: BluetoothDevice = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)!!
             sharedPreferences = getSharedPreferences(myPreference, Context.MODE_PRIVATE)
 
-            var deviceName = sharedPreferences!!.getString("Device", "")
+            val deviceName = sharedPreferences!!.getString("Device", "")
             println("service blue detection $deviceName")
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 
-                if (device.alias.toString().equals(deviceName)){
-
+                if (device.alias.toString() == deviceName){
+                    deviceSaved = deviceName
                     getLastLocation()
                 }
             }
@@ -143,39 +152,44 @@ class BlueListener : Service() {
     }
 
 
+
     @SuppressLint("MissingPermission")
     private fun getLastLocation() {
         if (checkPermissions()) {
             if (isLocationEnabled()) {
 
                 fusedLocationClient.lastLocation.addOnCompleteListener() { task ->
-                    var location: Location? = task.result
+                    var mLastLocation: Location? = task.result
 
-                    if (location != null) {
-                        var carLocation = location.latitude.toString()+","+location.longitude.toString()
-                        sharedPreferences = getSharedPreferences(myPreference, Context.MODE_PRIVATE)
-                        val editor: SharedPreferences.Editor = sharedPreferences!!.edit()
-                        editor.putString("carLocation", carLocation)
-                        editor.apply()
+                    if (mLastLocation != null) {
+                        saveLoc(mLastLocation.latitude,mLastLocation.longitude)
                     }
                     requestNewLocationData()
                 }
             } else {
-                newNotification("Something go wrong: ","Location is OFF, please set location ON and click this box to try save car location again")
+                newNotification(R.drawable.baseline_bluetooth_disabled_24,"Something go wrong: ","Location is OFF, please set location ON and click this box to try save car location again")
 
             }
+        }else{
+            newNotification(R.drawable.baseline_bluetooth_disabled_24,"Something go wrong: ","No permissions")
         }
     }
 
 
 
-    private fun newNotification(title:String,message: String) {
+    private fun newNotification(icon: Int = R.drawable.baseline_bluetooth_drive_24 ,title:String,message: String) {
 
-        val channelId = "moesoft" // Use same Channel ID
+        val CHANNEL_ID = "moesoft" // Use same Channel ID
+        val channel = NotificationChannel(
+            CHANNEL_ID,
+            "Info notifications",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+
         val intent = Intent(this, BlueListener::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        val builder = NotificationCompat.Builder(this, channelId) // Create notification with channel Id
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID) // Create notification with channel Id
+            .setSmallIcon(icon)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -190,35 +204,32 @@ class BlueListener : Service() {
     }
     @SuppressLint("MissingPermission")
     private fun requestNewLocationData() {
-        var mLocationRequest = LocationRequest()
+        val mLocationRequest = LocationRequest()
         mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         mLocationRequest.interval = 0
         mLocationRequest.fastestInterval = 0
         mLocationRequest.numUpdates = 1
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient!!.requestLocationUpdates(
-            mLocationRequest, mLocationCallback,
-            Looper.myLooper()
-        )
+        Looper.myLooper()?.let {
+            fusedLocationClient.requestLocationUpdates(
+                mLocationRequest, mLocationCallback,
+                it
+            )
+        }
     }
 
     private val mLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult) {
             var mLastLocation: Location = locationResult.lastLocation
 
-            var carLocation = mLastLocation.latitude.toString()+","+mLastLocation.longitude.toString()
-            sharedPreferences = getSharedPreferences(myPreference, Context.MODE_PRIVATE)
-            val editor: SharedPreferences.Editor = sharedPreferences!!.edit()
-            editor.putString("carLocation", carLocation)
-            editor.apply()
-            newNotification("Info:","Car location saved!")
+            saveLoc(mLastLocation.latitude,mLastLocation.longitude)
 
         }
     }
 
     private fun isLocationEnabled(): Boolean {
-        var locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
             LocationManager.NETWORK_PROVIDER
         )
@@ -237,6 +248,34 @@ class BlueListener : Service() {
             return true
         }
         return false
+    }
+
+
+    private fun saveLoc(latitude : Double,longitude : Double){
+      //  val oldLocations = getSharedPreferences(myPreference, Context.MODE_PRIVATE).getString("carLocationList", "")
+
+        val gson = Gson()
+        //val json = gson.toJson(myObject)
+
+        val oldLocationsJson = getSharedPreferences(myPreference, Context.MODE_PRIVATE).getString(CAR_LOCATION_LIST, "")
+        val type: Type = object : TypeToken<List<RegLocation?>?>() {}.type
+        val oldLocations: List<RegLocation> = gson.fromJson(oldLocationsJson, type)
+
+        val dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm"))
+        val regLoc = RegLocation(latitude,longitude,dateTime,deviceSaved)
+
+        val locations = ArrayList<RegLocation>()
+        locations.add(regLoc)
+        locations.addAll(oldLocations)
+
+        val json = gson.toJson(locations)
+
+        val editor: SharedPreferences.Editor = getSharedPreferences(myPreference, Context.MODE_PRIVATE).edit()
+
+        editor.putString(CAR_LOCATION_LIST, json)
+        editor.apply()
+
+        newNotification(R.drawable.baseline_location_on_24,"Info:","Car location saved!")
     }
 
 }
