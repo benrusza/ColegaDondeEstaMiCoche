@@ -15,6 +15,7 @@ import com.google.android.gms.location.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.moesoft.myapplication.Constants.Companion.CAR_LOCATION_LIST
+import com.moesoft.myapplication.Constants.Companion.pattern
 import com.moesoft.myapplication.model.RegLocation
 import java.lang.reflect.Type
 import java.time.LocalDateTime
@@ -95,6 +96,7 @@ class BlueListener : Service() {
         println("blue service start")
 
         IS_RUNNING = true
+        newNotification(title="Info", message = "blue service start")
     }
 
 
@@ -179,16 +181,19 @@ class BlueListener : Service() {
 
     private fun newNotification(icon: Int = R.drawable.baseline_bluetooth_drive_24 ,title:String,message: String) {
 
-        val CHANNEL_ID = "moesoft" // Use same Channel ID
-        val channel = NotificationChannel(
+        val CHANNEL_ID = "moesoft.info" // Use same Channel ID
+        var channel = NotificationChannel(
             CHANNEL_ID,
             "Info notifications",
             NotificationManager.IMPORTANCE_DEFAULT
         )
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(
+            channel
+        )
 
         val intent = Intent(this, BlueListener::class.java)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID) // Create notification with channel Id
+        val builder = NotificationCompat.Builder(this, channel.id) // Create notification with channel Id
             .setSmallIcon(icon)
             .setContentTitle(title)
             .setContentText(message)
@@ -252,21 +257,29 @@ class BlueListener : Service() {
 
 
     private fun saveLoc(latitude : Double,longitude : Double){
-      //  val oldLocations = getSharedPreferences(myPreference, Context.MODE_PRIVATE).getString("carLocationList", "")
 
         val gson = Gson()
-        //val json = gson.toJson(myObject)
 
+        var oldLocations: List<RegLocation> = emptyList()
         val oldLocationsJson = getSharedPreferences(myPreference, Context.MODE_PRIVATE).getString(CAR_LOCATION_LIST, "")
-        val type: Type = object : TypeToken<List<RegLocation?>?>() {}.type
-        val oldLocations: List<RegLocation> = gson.fromJson(oldLocationsJson, type)
 
-        val dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm"))
+        if(oldLocationsJson!=""){
+            val type: Type = object : TypeToken<List<RegLocation?>?>() {}.type
+            oldLocations = gson.fromJson(oldLocationsJson, type)
+        }
+
+
+        val dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern(pattern))
         val regLoc = RegLocation(latitude,longitude,dateTime,deviceSaved)
 
         val locations = ArrayList<RegLocation>()
         locations.add(regLoc)
-        locations.addAll(oldLocations)
+        if (oldLocations.size>10){
+            locations.addAll(oldLocations.subList(0,9))
+        }else{
+            locations.addAll(oldLocations)
+        }
+
 
         val json = gson.toJson(locations)
 

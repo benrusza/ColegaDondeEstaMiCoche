@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Html
 import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
@@ -16,6 +17,7 @@ import com.moesoft.myapplication.Constants.Companion.pattern
 import com.moesoft.myapplication.model.RegLocation
 import java.lang.reflect.Type
 import java.sql.Date
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -59,17 +61,16 @@ class SeeLocation : AppCompatActivity() {
 
             var str = ""
 
-            locations = locations.sortedByDescending { LocalDateTime.parse(it.date, DateTimeFormatter.ofPattern(pattern)) }
+            locations = locations.sortedByDescending { LocalDate.parse(it.date, DateTimeFormatter.ofPattern(pattern)) }
             locations.forEach {
 
-                val linkedText = "${it.date} " +
-                        java.lang.String.format("<a href=\"%s\">${it.deviceName}</a> ", "http://www.google.com/maps/place/${it.latitude},${it.longitude}")
+                val linkedText = "${it.date}-${it.deviceName} https://www.google.com/maps/place/${it.latitude},${it.longitude}"
 
                 str+="\n$linkedText"
             }
 
             textLocation.text = str
-            textLocation.movementMethod = LinkMovementMethod.getInstance()
+            Linkify.addLinks(textLocation, Linkify.WEB_URLS);
         }
 
     }

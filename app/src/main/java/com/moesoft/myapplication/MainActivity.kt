@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
             showSettingsAlert()
         }
 
-        if(!isMyServiceRunning(BlueListener::class.java)){
+        if(!IS_RUNNING){
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(Intent(this, BlueListener::class.java))
             } else {
